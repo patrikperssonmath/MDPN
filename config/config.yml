@@ -1,0 +1,40 @@
+dataset:
+  root_dir: "/data/"
+  image_height: 192
+  image_width: 256
+rgbd_dataset:
+  root_dir: "/database/shape_dataset/" # "/database/depth_subsample/" #
+sfm_dataset:
+  root_dir: "/database/sfm/"
+  datasets: [door] #[scannet/*]
+model:
+  root_dir: "/data/"
+  log_dir: "/data/logs/shape_estimator"
+  shape_size: 192
+  batch_size: 5
+  network: 'ShapeNetwork'
+  regularization: 0.00000001
+PhotometricOptimizer:
+  max_iterations: 100
+  termination_crit: 0.005
+  angle_th: 85
+  angle_th_display: 80
+SFM:
+  nbr_covisible_cameras: 5
+  min_covisibility: 0  
+  buffer_th: 500
+Trainer:
+  ckpt_freq: 5
+  write_dataset_freq: 10
+  max_dataset_write: 20
+  predict_only: True
+  write_tb_freq: 1
+  nbr_samples_per_update: 5
+Manager:
+  train_photometric_or_depth: True #true is photometric
+  epochs: 4000
+  write_result: False
+  write_predictions_only: False # writes predictions. (z must have been optimized in a previous run, otherwise z=0 is used!)
+  write_heatmap_flag: False
+Timer:
+  measure: False
