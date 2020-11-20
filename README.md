@@ -12,7 +12,7 @@
 4. Unzip in ./demo/database/, afterwards it should be ./demo/database/sfm
 5. Build container by running: ./demo/docker_build.sh
 6. Perform shape estimation by running: ./demo/docker_run_demo.sh <dataset>
-        eg: ./demo/docker_run_demo.sh fountain
+eg: ./demo/docker_run_demo.sh fountain
 7. The reconstructions are stored in ./demo/data/predictions/unsupervised/0/
 
 ### Add Your Own Images
