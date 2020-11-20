@@ -58,7 +58,7 @@ Run
 ```
 ./utility/docker_colmap.sh /path/name/
 ```
-To to find a sparse sfm solution using colmap and convert them to the expected format. The solutions are saved in
+to to find a sparse sfm solution using [colmap](https://colmap.github.io/) and convert it to the expected format. The solutions are saved in
 
 ```
 ./demo/database/sfm/processed/
@@ -68,6 +68,6 @@ Run
 ```
 ./demo/docker_run_demo.sh name
 ```
-to reconstruct 3D structure, 
+to reconstruct the 3D structure, 
 ### Optional
     Install vscode with docker plugin for easy in docker container development (optional)
