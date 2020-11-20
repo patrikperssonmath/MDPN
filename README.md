@@ -1,7 +1,7 @@
 # ShapeEstimator
 
 ## Installation
-    1. Make sure you have an updated grapich card driver
+    1. Make sure you have an updated nvidia grapich card driver
     2. Install Docker Community
     3. Install NVIDIA Container Toolkit
 
