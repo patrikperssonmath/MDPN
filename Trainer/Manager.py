@@ -14,6 +14,7 @@ import numpy as np
 from tensorflow.keras.optimizers import Adam, Adamax
 import time
 from datetime import datetime
+import sys
 
 
 class Manager:
@@ -129,10 +130,20 @@ class Manager:
             self.root.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
         if not os.path.exists(self.model_folder):
-            os.makedirs(self.model_folder)
+
+            if self.predict_only:
+                print("network could not be loaded!")
+                return False
+            else:
+                os.makedirs(self.model_folder)
         else:
             if self.predict_only:
-                self.network.load(self.model_folder)
+
+                if not self.network.load(self.model_folder):
+                    print("network could not be loaded!")
+                    return False
+
+        return True
 
     def startTensorboard(self):
 
@@ -151,7 +162,11 @@ class Manager:
 
         self.initialize_z_variables()
 
-        self.setup_checkpoint()
+        if not self.setup_checkpoint():
+            self.depth_batch_loader.terminate()
+            self.photometric_batch_loader.terminate()
+            self.terminate()
+            return False
 
         self.startTensorboard()
 
@@ -262,6 +277,8 @@ class Manager:
         self.depth_batch_loader.terminate()
         self.photometric_batch_loader.terminate()
         self.terminate()
+
+        return True
 
     def write_results(self):
 

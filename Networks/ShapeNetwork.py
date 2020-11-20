@@ -232,15 +232,23 @@ class ShapeNetwork:
 
     def load(self, folder):
 
+        loaded = True
+
         path = os.path.join(folder, self.getName()+"_encode"+".hdf5")
 
         if os.path.exists(path):
             self.encode_model.load_weights(path)
+        else:
+            loaded = False
 
         path = os.path.join(folder, self.getName()+"_decode"+".hdf5")
 
         if os.path.exists(path):
             self.decode_model.load_weights(path)
+        else:
+            loaded = False
+
+        return loaded
 
     def getEncoder(self):
         return self.encode_model
