@@ -139,3 +139,5 @@ dmypy.json
 checkpoint
 ckpt*
 .ply
+
+/demo/data/results
