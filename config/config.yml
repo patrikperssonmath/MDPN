@@ -33,7 +33,7 @@ Trainer:
 Manager:
   train_photometric_or_depth: True #true is photometric
   epochs: 4000
-  write_result: False
+  write_result: True
   write_predictions_only: False # writes predictions. (z must have been optimized in a previous run, otherwise z=0 is used!)
   write_heatmap_flag: False
 Timer:

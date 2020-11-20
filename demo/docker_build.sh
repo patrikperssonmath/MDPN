@@ -1,0 +1,1 @@
+docker build -t shapeestimator -f ./.devcontainer/Dockerfile .

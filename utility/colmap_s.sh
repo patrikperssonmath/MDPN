@@ -1,3 +1,5 @@
+#!/bin/bash
+
 DATASET_PATH=$1
 
 colmap feature_extractor \
