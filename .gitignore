@@ -143,3 +143,4 @@ ckpt*
 /demo/data/results
 /demo/data/models
 /demo/database/sfm
+*.zip
