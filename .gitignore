@@ -142,5 +142,6 @@ ckpt*
 
 /demo/data/results
 /demo/data/models
+/demo/data/heatmap
 /demo/database/sfm
 *.zip
