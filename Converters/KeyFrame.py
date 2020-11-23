@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2020 Patrik Persson and Linn Öström
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 from Sfm.sfm_image import sfm_image
 import tensorflow as tf
 import numpy as np
@@ -31,7 +53,7 @@ class KeyFrame:
         Tinv_batch = tf.stack([self.Tinv_i, Tinv_j])
         calib_batch = tf.stack([self.calib_i, calib_j])
 
-        alpha_batch =  tf.reduce_mean(D_batch, axis=[1, 2, 3])
+        alpha_batch = tf.reduce_mean(D_batch, axis=[1, 2, 3])
 
         mask = g.calculate_overlap(
             I_batch, D_batch, T_batch, Tinv_batch, calib_batch, angle, alpha_batch)

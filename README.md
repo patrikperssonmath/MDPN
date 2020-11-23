@@ -69,5 +69,6 @@ Run
 ./demo/docker_run_demo.sh name
 ```
 to reconstruct the 3D structure, 
+
 ### Optional
-    Install vscode with docker plugin for easy in docker container development (optional)
+Install vscode with docker plugin for easy in docker container development (optional)
