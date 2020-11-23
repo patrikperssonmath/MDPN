@@ -48,6 +48,8 @@ The reconstructions are stored in
 ./demo/data/predictions/unsupervised/0/
 ```
 
+For each image four files will be generated. "_ground_truth" which contains either a sparse or dense ground truth, "_initial" which contains the solution when $z$ is zero, "_pred" contains the 3D reconstruction and "_pred_filtered" where points with shallow angle have been filtered out.
+
 ### Add Your Own Images
 Put images in a folder 
 ```
