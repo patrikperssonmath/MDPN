@@ -149,6 +149,9 @@ class sfm_colmap_converter:
 
             imsave(im.getFileName(), (image_r*255.0).astype(np.uint8))
 
+            im.image = None
+            im.depth = None
+
             dict_file.update({im.getId(): im.__dict__})
 
             print("Done %i out of %i" % (i+1, len(sfm_images)), end="\r")

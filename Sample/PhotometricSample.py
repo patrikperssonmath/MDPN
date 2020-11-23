@@ -339,7 +339,7 @@ class PhotometricSample:
 
             z = tf.Variable(self.z[0])
 
-            z.assign(z + 1e-3*pertb)
+            z.assign(z + 5e-3*pertb)
 
             z_batch = tf.stack([z])
 

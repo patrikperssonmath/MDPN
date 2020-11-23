@@ -170,6 +170,9 @@ class sfm_data_converter:
 
             imsave(im.getFileName(), (image_r*255.0).astype(np.uint8))
 
+            im.image = None
+            im.depth = None
+
             dict_file.update({im.getId(): im.__dict__})
 
             print("Done %i out of %i" % (i+1, len(sfm_images)), end="\r")
@@ -184,9 +187,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('config', type=str)
-    parser.add_argument('--input_folder', "--i", default="/data/sfm",
+    parser.add_argument('--input_folder', "--i", default="/data/carl_sfm_indoor",
                         type=str, required=False)
-    parser.add_argument('--datasets', "--d", default="door fountain",
+    parser.add_argument('--datasets', "--d", default="door fountain Fort_Channing_gate",
                         type=str, required=False)
 
     args = parser.parse_args()
