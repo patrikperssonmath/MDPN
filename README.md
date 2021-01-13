@@ -9,7 +9,7 @@
 
 | Network |  Demo data |
 |---|---|
-|[Google Drive](https://drive.google.com/file/d/1T0cyOM50Cj5evPGqWKCBNINpHXg4d763/view?usp=sharing)|[Google Drive](https://drive.google.com/file/d/1z7kX1gmeyTf3kAHFRsiaEdeVBbi71ZcL/view?usp=sharing)
+|[Google Drive](https://drive.google.com/file/d/1vKiAoWQKeXpnkZLjqF0Kx6xxWqxyVImv/view?usp=sharing)|[Google Drive](https://drive.google.com/file/d/1z7kX1gmeyTf3kAHFRsiaEdeVBbi71ZcL/view?usp=sharing)
 
  Unzip network in ./demo/data/models/,
 ```
