@@ -27,6 +27,7 @@ import numpy as np
 import time
 from Trainer.Timer import Timer
 from PIL import Image
+from tensorflow_addons.image import interpolate_bilinear
 
 
 class PhotometricOptimizer2:
@@ -52,6 +53,92 @@ class PhotometricOptimizer2:
 
     def getCheckPointVariables(self):
         return {"photometric_optimizer": self.optimizer}
+
+    def predict_sparse(self, I, z, alpha, s_depth, calib, network):
+        t1 = time.perf_counter()*1000
+
+        self.timer.start()
+
+        I_batch = tf.stack(I)
+        calib_batch = tf.stack(calib)
+        alpha_batch = tf.stack(alpha)
+        s_depth = tf.stack(s_depth)
+
+        self.timer.log("stack")
+
+        R = self.g.normalized_points(I_batch, calib_batch)
+
+        IR = tf.concat((I_batch, R), axis=-1)
+
+        q, mu, logvar = network.encode(IR)
+
+        count = tf.constant(0.0, dtype=tf.float32)
+
+        mu_unstacked = tf.unstack(mu)
+
+        trainable_variables = [*z, *alpha]
+
+        for i, e in enumerate(mu_unstacked):
+
+            if tf.reduce_sum(tf.abs(z[i])) == 0.0:
+                z[i].assign(mu_unstacked[i])
+
+        prev_loss = tf.constant(0.0, dtype=tf.float32)
+
+        for i in range(self.max_iterations):
+
+            z_batch = tf.stack(z)
+
+            self.timer.log("gradient")
+
+            loss_val = tf.constant(0.0, dtype=tf.float32)
+
+            with tf.GradientTape(watch_accessed_variables=False) as tape:
+                tape.watch([z_batch, alpha_batch])
+
+                P = network.decode(q, z_batch)
+
+                D_batch = network.mapToDepth(
+                    alpha_batch, P)
+
+                D_int = interpolate_bilinear(D_batch, s_depth, indexing='xy')
+
+                loss_val += self.g.log_normal_loss(z_batch, mu, logvar)
+                loss_val += tf.reduce_sum(tf.square(tf.reduce_mean(network.mapToDepth(
+                    tf.ones_like(alpha_batch), P), axis=[1, 2, 3]) - 1.0))
+
+            gradients = tape.gradient(loss_val, [z_batch, alpha_batch])
+
+            rel_e = tf.abs(prev_loss - loss_val)/loss_val
+
+            s, count, stop = self.evaluate_rel_error(rel_e, s, count)
+
+            self.timer.log("update")
+
+            g = [tf.unstack(gradient) for gradient in gradients]
+
+            flat_list = [item for sublist in g for item in sublist]
+
+            self.optimizer.apply_gradients(
+                zip(flat_list, trainable_variables))
+
+            self.timer.log("end")
+
+            if i > 0:
+
+                if stop:
+                    break
+
+            # print("loss, s", loss_val.numpy(), s.numpy())
+
+        self.timer.print()
+
+        diff = time.perf_counter()*1000 - t1
+
+        print('\nItr: {0} of {1}. Time {2} ms, per itr: {3}: loss {4}\n'.format(
+            str(i), str(self.max_iterations), str(diff), str(diff/(i+1)), str(loss_val.numpy())))
+
+        return loss_val
 
     def predict(self, I, z, alpha, T, Tinv, calib, network):
 

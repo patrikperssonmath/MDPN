@@ -111,6 +111,15 @@ class sfm_image:
     def distance(self, sfm_image):
         return np.linalg.norm(self.getCameraCenter() - sfm_image.getCameraCenter())
 
+    def getSparseLocalDepth(self):
+
+        shape = self.sparse_depth.shape
+
+        u = np.dot(self.P, np.concatenate(
+            (self.sparse_depth, np.ones((1, shape[-1])))))
+
+        return u
+
     def getMeanDepth(self):
 
         if self.depth_mean is None:

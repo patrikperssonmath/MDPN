@@ -20,8 +20,8 @@
 	"runArgs": [
 		//"--privileged=true",
 		"--gpus=all",
-		"-v=/data:/data:rw",
-		"-v=/database/shape_info:/database:rw",
+		"-v=${localWorkspaceFolder}/demo/data/:/data:rw",
+		"-v=${localWorkspaceFolder}/demo/database/:/database:rw",
 		"--rm"		
 	]
 }

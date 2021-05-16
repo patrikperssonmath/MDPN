@@ -29,6 +29,7 @@ class Trainer:
         self.predict_only = config['Trainer']['predict_only']
         self.nbr_samples_per_update = config['Trainer']['nbr_samples_per_update']
         self.optimizer = Adamax(lr=1e-3)
+        self.sparse_prediction = config['Sparse']['sparse_prediction']
 
         self.buffered_samples = []
 
@@ -41,7 +42,13 @@ class Trainer:
 
             if self.predict_only:
 
-                loss = sample.predict(network)
+                if not self.sparse_prediction:
+
+                    loss = sample.predict(network)
+
+                else:
+
+                    loss = sample.predict_sparse(network)
 
                 return loss, recon_loss
 

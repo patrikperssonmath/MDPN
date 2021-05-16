@@ -63,6 +63,20 @@ class PhotometricSample:
 
         return recon_loss
 
+    def predict_sparse(self, network):
+
+        s_depth = []
+
+        for image in self.sfm_images:
+
+            s_depth = [*s_depth, image.getSparseLocalDepth()]
+
+        # optimizes over z and alpha
+        recon_loss = self.photometric_optimizer.predict_sparse(
+            self.I, self.z, self.alpha, s_depth, self.calib, network)
+
+        return recon_loss
+
     def train(self, network):
 
         recon_loss, loss = self.photometric_optimizer.train(
