@@ -6,7 +6,7 @@ rgbd_dataset:
   root_dir: "/database/shape_dataset/" # "/database/depth_subsample/" #
 sfm_dataset:
   root_dir: "/database/sfm/"
-  datasets: [door] #[scannet/*]
+  datasets: [Test5352] #[scannet/*]
 model:
   root_dir: "/data/"
   log_dir: "/data/logs/shape_estimator"
@@ -16,7 +16,7 @@ model:
   regularization: 0.00000001
 PhotometricOptimizer:
   max_iterations: 100
-  termination_crit: 0.005
+  termination_crit: 0.001
   angle_th: 85
   angle_th_display: 80
 SFM:

@@ -28,6 +28,7 @@ import time
 from Trainer.Timer import Timer
 from PIL import Image
 from tensorflow_addons.image import interpolate_bilinear
+from .Infere_Sparse import Inference
 
 
 class PhotometricOptimizer2:
@@ -45,6 +46,8 @@ class PhotometricOptimizer2:
 
         self.angle_th = tf.constant(self.angle_th, dtype=tf.float32)
 
+        self.test = Inference(config)
+
     def updateLearningRate(self, lr):
         self.optimizer.learning_rate.assign(lr)
 
@@ -55,116 +58,42 @@ class PhotometricOptimizer2:
         return {"photometric_optimizer": self.optimizer}
 
     def predict_sparse(self, I, z, alpha, s_depths, calib, network):
-        t1 = time.perf_counter()*1000
 
         self.timer.start()
 
         I_batch = tf.stack(I)
         calib_batch = tf.stack(calib)
 
-        max_len = 30000
+        z_batch = tf.stack(z)
+        alpha_batch = tf.stack(alpha)
+
+        max_len = 20000
 
         mask_depths = [tf.range(0, max_len) < s_depth.shape[1]
                        for s_depth in s_depths]
 
-        #s_depth = tf.stack(s_depth)
+        mask_depths = tf.stack(mask_depths)
+
         s_depths = [tf.pad(tf.constant(s_depth, dtype=tf.float32), [[0, 0], [0, max_len-s_depth.shape[1]]])
                     for s_depth in s_depths]
 
-        self.timer.log("stack")
+        s_depths = tf.stack(s_depths)
 
-        R = self.g.normalized_points(I_batch, calib_batch)
+        t1 = time.perf_counter()*1000
 
-        IR = tf.concat((I_batch, R), axis=-1)
+        z_res, alpha_res, loss_val, iterations = self.test.infere(I_batch, calib_batch, z_batch, alpha_batch,
+                                                                  s_depths, mask_depths, network)
 
-        q, mu, logvar = network.encode(IR)
+        for i, e in enumerate(tf.unstack(z_res)):
+            z[i].assign(e)
 
-        count = tf.constant(0.0, dtype=tf.float32)
-
-        mu_unstacked = tf.unstack(mu)
-
-        trainable_variables = [*z, *alpha]
-
-        for i, e in enumerate(mu_unstacked):
-
-            if tf.reduce_sum(tf.abs(z[i])) == 0.0:
-                z[i].assign(mu_unstacked[i])
-
-        prev_loss = tf.constant(0.0, dtype=tf.float32)
-
-        for i in range(self.max_iterations):
-
-            self.timer.log("gradient")
-
-            with tf.GradientTape(watch_accessed_variables=False) as tape:
-                tape.watch([z, alpha])
-
-                loss_val = tf.constant(0.0, dtype=tf.float32)
-
-                z_batch = tf.stack(z)
-
-                alpha_batch = tf.stack(alpha)
-
-                P = network.decode(q, z_batch)
-
-                D_batch = network.mapToDepth(
-                    alpha_batch, P)
-
-                for j in range(len(s_depths)):
-
-                    xy = s_depths[j][0:2]
-
-                    D_int = interpolate_bilinear(
-                        D_batch[j:j+1], tf.expand_dims(tf.transpose(xy, perm=[1, 0]), axis=0), indexing='xy')
-
-                    d_test = tf.expand_dims(s_depths[j][2:3], axis=-1)
-
-                    #e = tf.square(D_int - d_test)
-                    e = self.g.Huber(
-                        D_int - d_test, 0.1)
-
-                    e = tf.boolean_mask(e, tf.expand_dims(mask_depths[j], 0))
-
-                    loss_val += tf.reduce_sum(e)
-
-                loss_val += self.g.log_normal_loss(z_batch, mu, logvar)
-                loss_val += tf.reduce_sum(tf.square(tf.reduce_mean(network.mapToDepth(
-                    tf.ones_like(alpha_batch), P), axis=[1, 2, 3]) - 1.0))
-
-            gradients = tape.gradient(loss_val, trainable_variables)
-
-            rel_e = tf.abs(prev_loss - loss_val)/loss_val
-
-            prev_loss = loss_val
-
-            s = tf.constant(1, dtype=tf.float32)
-
-            s, count, stop = self.evaluate_rel_error(rel_e, s, count)
-
-            self.timer.log("update")
-
-            #g = [tf.unstack(gradient) for gradient in gradients]
-
-            #flat_list = [item for sublist in g for item in sublist]
-
-            self.optimizer.apply_gradients(
-                zip(gradients, trainable_variables))
-
-            self.timer.log("end")
-
-            if i > 0:
-
-                if stop:
-                    break
-
-            # print("loss, s", loss_val.numpy(), s.numpy())
-
-        self.timer.print()
+        for i, e in enumerate(tf.unstack(alpha_res)):
+            alpha[i].assign(e)
 
         diff = time.perf_counter()*1000 - t1
 
         print('\nItr: {0} of {1}. Time {2} ms, per itr: {3}: loss {4}\n'.format(
-            str(i), str(self.max_iterations), str(diff), str(diff/(i+1)), str(loss_val.numpy())))
+            str(iterations.numpy()), str(self.max_iterations), str(diff), str(diff/(iterations.numpy())), str(loss_val.numpy())))
 
         return loss_val
 
