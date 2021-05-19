@@ -87,3 +87,46 @@ class InferePhotometric:
             error_prev = error
 
         return self.z, self.alpha, error, i+1
+
+    """ not used!!
+
+    @tf.function
+    def prediction_error_pyramid(self, s, T_batch, Tinv_batch, calib_batch, I_batch, alpha_batch, z_batch, q, network):
+
+        D_batch = network.mapToDepth(
+            alpha_batch, network.decode(q, z_batch))
+
+        shape = tf.shape(I_batch)
+
+        h = tf.cast(shape[1], dtype=tf.float32)
+        w = tf.cast(shape[2], dtype=tf.float32)
+
+        s_dinv = tf.reshape(tf.linalg.diag(
+            [s, s, 1.0, 1.0]), shape=[1, 4, 4])
+
+        s_d = tf.reshape(tf.linalg.diag(
+            [1.0/s, 1.0/s, 1.0, 1.0]), shape=[1, 4, 4])
+
+        T_batch_s = tf.matmul(s_d, T_batch)
+        Tinv_batch_s = tf.matmul(Tinv_batch, s_dinv)
+
+        h_s = tf.cast(tf.math.floordiv(
+            h, s), dtype=tf.float32)
+        w_s = tf.cast(tf.math.floordiv(
+            w, s), dtype=tf.float32)
+
+        I_batch_s = tf.image.resize(I_batch, [h_s, w_s])
+        D_batch_s = tf.image.resize(D_batch, [h_s, w_s])
+
+        self.timer.log("prediction")
+
+        error_photometric, error_depth = self.g.evaluate_photogeometric_error(
+            I_batch_s, D_batch_s, T_batch_s, Tinv_batch_s,  calib_batch/s, self.angle_th)
+
+        self.timer.log("error")
+
+        loss_val = error_photometric + error_depth
+
+        return loss_val
+
+    """
