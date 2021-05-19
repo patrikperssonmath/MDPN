@@ -76,15 +76,15 @@ class PhotometricOptimizer2:
 
         mask_depths = tf.stack(mask_depths)
 
-        s_depths = [tf.pad(tf.constant(s_depth, dtype=tf.float32), [[0, 0], [0, max_len-s_depth.shape[1]]])
-                    for s_depth in s_depths]
+        s_depths_extend = [tf.pad(tf.constant(s_depth, dtype=tf.float32), [[0, 0], [0, max_len-s_depth.shape[1]]])
+                           for s_depth in s_depths]
 
-        s_depths = tf.stack(s_depths)
+        s_depths_extend = tf.stack(s_depths_extend)
 
         t1 = time.perf_counter()
 
         z_res, alpha_res, loss_val, iterations = self.infer_sparse.infere(I_batch, calib_batch, z_batch, alpha_batch,
-                                                                          s_depths, mask_depths, network)
+                                                                          s_depths_extend, mask_depths, network)
 
         for i, e in enumerate(tf.unstack(z_res)):
             z[i].assign(e)
