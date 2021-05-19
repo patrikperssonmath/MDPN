@@ -81,10 +81,10 @@ class PhotometricOptimizer2:
 
         s_depths = tf.stack(s_depths)
 
-        t1 = time.perf_counter()*1000
+        t1 = time.perf_counter()
 
         z_res, alpha_res, loss_val, iterations = self.infer_sparse.infere(I_batch, calib_batch, z_batch, alpha_batch,
-                                                                  s_depths, mask_depths, network)
+                                                                          s_depths, mask_depths, network)
 
         for i, e in enumerate(tf.unstack(z_res)):
             z[i].assign(e)
@@ -92,10 +92,10 @@ class PhotometricOptimizer2:
         for i, e in enumerate(tf.unstack(alpha_res)):
             alpha[i].assign(e)
 
-        diff = time.perf_counter()*1000 - t1
+        diff = time.perf_counter() - t1
 
         print('\nItr: {0} of {1}. Time {2} ms, per itr: {3}: loss {4}\n'.format(
-            str(iterations.numpy()), str(self.max_iterations), str(diff), str(diff/(iterations.numpy())), str(loss_val.numpy())))
+            str(iterations.numpy()), str(self.max_iterations), str(diff*1000), str(diff*1000/(iterations.numpy())), str(loss_val.numpy())))
 
         return loss_val
 
@@ -108,11 +108,11 @@ class PhotometricOptimizer2:
         alpha_batch = tf.stack(alpha)
         z_batch = tf.stack(z)
 
-        t1 = time.perf_counter()*1000
+        t1 = time.perf_counter()
 
         z_res, alpha_res, loss_val, iterations = self.infer_photo.infere(I_batch, T_batch, Tinv_batch,
-                                                                          calib_batch, z_batch, alpha_batch,
-                                                                          network)
+                                                                         calib_batch, z_batch, alpha_batch,
+                                                                         network)
 
         for i, e in enumerate(tf.unstack(z_res)):
             z[i].assign(e)
@@ -120,10 +120,10 @@ class PhotometricOptimizer2:
         for i, e in enumerate(tf.unstack(alpha_res)):
             alpha[i].assign(e)
 
-        diff = time.perf_counter()*1000 - t1
+        diff = time.perf_counter() - t1
 
         print('\nItr: {0} of {1}. Time {2} ms, per itr: {3}: loss {4}\n'.format(
-            str(iterations.numpy()), str(self.max_iterations), str(diff), str(diff/(iterations.numpy())), str(loss_val.numpy())))
+            str(iterations.numpy()), str(self.max_iterations), str(diff*1000), str(diff*1000/(iterations.numpy())), str(loss_val.numpy())))
 
         return loss_val
 

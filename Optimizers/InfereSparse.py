@@ -76,8 +76,7 @@ class InfereSparse:
                 zip(gradients, trainable_variables))
 
             if i > 0 and (tf.math.abs(error-error_prev) / tf.math.abs(error)) < self.termination_crit:
-                    # tf.print("breaking")
-                    break
+                break
 
             error_prev = error
 
