@@ -5,7 +5,7 @@ from tensorflow_addons.image import interpolate_bilinear
 from Graphics.Graphics3 import Graphics3
 
 
-class Inference:
+class InferePhotometric:
     def __init__(self, config):
 
         self.z = None
@@ -13,12 +13,17 @@ class Inference:
 
         self.g = Graphics3()
 
+        self.angle_th = np.cos(
+            (config['PhotometricOptimizer']['angle_th']/180.0) * np.pi)
+
+        self.angle_th = tf.constant(self.angle_th, dtype=tf.float32)
+
         self.optimizer = Adamax(lr=1e-3)
-        self.iterations = 100  # config["Inference"]["iterations"]
+        self.iterations = 100  # config["InferePhotometric"]["iterations"]
         self.termination_crit = config["PhotometricOptimizer"]["termination_crit"]
 
     @tf.function
-    def infere(self, I, calibration, z_in, alpha_in, u, u_mask, network):
+    def infere(self, I, T, Tinv, calibration, z_in, alpha_in, network):
 
         R = self.g.normalized_points(I, calibration)
 
@@ -52,25 +57,23 @@ class Inference:
 
                 D = network.mapToDepth(self.alpha, P)
 
-                xy = u[:, 0:2]
+                error_photometric, error_depth = self.g.evaluate_photogeometric_error(
+                    I,
+                    D,
+                    T,
+                    Tinv,
+                    calibration,
+                    self.angle_th,
+                    self.alpha)
 
-                D_int = interpolate_bilinear(
-                    D, tf.transpose(xy, perm=[0, 2, 1]), indexing='xy')
-
-                d_sparse = tf.transpose(u[:, 2:3], perm=[0, 2, 1])
-
-                e = self.g.Huber(D_int - d_sparse, 0.1)
-
-                e = tf.boolean_mask(e, u_mask)
-
-                error = tf.reduce_sum(e)
+                error = error_photometric + error_depth
 
                 error += tf.reduce_sum(tf.square(tf.reduce_mean(network.mapToDepth(
                     tf.ones_like(self.alpha), P), axis=[1, 2, 3]) - 1.0))
 
                 error += tf.reduce_sum(tf.square(self.z))
 
-                # tf.print(i, error)
+                #tf.print(i, error)
 
             gradients = tape.gradient(error, trainable_variables)
 
@@ -78,8 +81,8 @@ class Inference:
                 zip(gradients, trainable_variables))
 
             if i > 0 and (tf.math.abs(error-error_prev) / tf.math.abs(error)) < self.termination_crit:
-                    # tf.print("breaking")
-                    break
+                # tf.print("breaking")
+                break
 
             error_prev = error
 

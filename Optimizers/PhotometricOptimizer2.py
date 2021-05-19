@@ -29,6 +29,7 @@ from Trainer.Timer import Timer
 from PIL import Image
 from tensorflow_addons.image import interpolate_bilinear
 from .Infere_Sparse import Inference
+from .InferePhotometric import InferePhotometric
 
 
 class PhotometricOptimizer2:
@@ -47,6 +48,7 @@ class PhotometricOptimizer2:
         self.angle_th = tf.constant(self.angle_th, dtype=tf.float32)
 
         self.test = Inference(config)
+        self.infere_photo = InferePhotometric(config)
 
     def updateLearningRate(self, lr):
         self.optimizer.learning_rate.assign(lr)
@@ -98,6 +100,34 @@ class PhotometricOptimizer2:
         return loss_val
 
     def predict(self, I, z, alpha, T, Tinv, calib, network):
+
+        I_batch = tf.stack(I)
+        T_batch = tf.stack(T)
+        Tinv_batch = tf.stack(Tinv)
+        calib_batch = tf.stack(calib)
+        alpha_batch = tf.stack(alpha)
+        z_batch = tf.stack(z)
+
+        t1 = time.perf_counter()*1000
+
+        z_res, alpha_res, loss_val, iterations = self.infere_photo.infere(I_batch, T_batch, Tinv_batch,
+                                                                          calib_batch, z_batch, alpha_batch,
+                                                                          network)
+
+        for i, e in enumerate(tf.unstack(z_res)):
+            z[i].assign(e)
+
+        for i, e in enumerate(tf.unstack(alpha_res)):
+            alpha[i].assign(e)
+
+        diff = time.perf_counter()*1000 - t1
+
+        print('\nItr: {0} of {1}. Time {2} ms, per itr: {3}: loss {4}\n'.format(
+            str(iterations.numpy()), str(self.max_iterations), str(diff), str(diff/(iterations.numpy())), str(loss_val.numpy())))
+
+        return loss_val
+
+    def predict2(self, I, z, alpha, T, Tinv, calib, network):
 
         t1 = time.perf_counter()*1000
 
