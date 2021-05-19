@@ -5,7 +5,7 @@ from tensorflow_addons.image import interpolate_bilinear
 from Graphics.Graphics3 import Graphics3
 
 
-class Inference:
+class InfereSparse:
     def __init__(self, config):
 
         self.z = None
@@ -23,8 +23,6 @@ class Inference:
         R = self.g.normalized_points(I, calibration)
 
         IR = tf.concat((I, R), axis=-1)
-
-        shape = tf.shape(I)
 
         if self.z is None:
             self.z = tf.Variable(z_in, dtype=tf.float32)

@@ -28,7 +28,7 @@ import time
 from Trainer.Timer import Timer
 from PIL import Image
 from tensorflow_addons.image import interpolate_bilinear
-from .Infere_Sparse import Inference
+from .InfereSparse import InfereSparse
 from .InferePhotometric import InferePhotometric
 
 
@@ -47,8 +47,8 @@ class PhotometricOptimizer2:
 
         self.angle_th = tf.constant(self.angle_th, dtype=tf.float32)
 
-        self.test = Inference(config)
-        self.infere_photo = InferePhotometric(config)
+        self.infer_sparse = InfereSparse(config)
+        self.infer_photo = InferePhotometric(config)
 
     def updateLearningRate(self, lr):
         self.optimizer.learning_rate.assign(lr)
@@ -83,7 +83,7 @@ class PhotometricOptimizer2:
 
         t1 = time.perf_counter()*1000
 
-        z_res, alpha_res, loss_val, iterations = self.test.infere(I_batch, calib_batch, z_batch, alpha_batch,
+        z_res, alpha_res, loss_val, iterations = self.infer_sparse.infere(I_batch, calib_batch, z_batch, alpha_batch,
                                                                   s_depths, mask_depths, network)
 
         for i, e in enumerate(tf.unstack(z_res)):
@@ -110,7 +110,7 @@ class PhotometricOptimizer2:
 
         t1 = time.perf_counter()*1000
 
-        z_res, alpha_res, loss_val, iterations = self.infere_photo.infere(I_batch, T_batch, Tinv_batch,
+        z_res, alpha_res, loss_val, iterations = self.infer_photo.infere(I_batch, T_batch, Tinv_batch,
                                                                           calib_batch, z_batch, alpha_batch,
                                                                           network)
 
