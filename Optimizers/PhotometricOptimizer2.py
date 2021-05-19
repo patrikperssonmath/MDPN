@@ -54,15 +54,22 @@ class PhotometricOptimizer2:
     def getCheckPointVariables(self):
         return {"photometric_optimizer": self.optimizer}
 
-    def predict_sparse(self, I, z, alpha, s_depth, calib, network):
+    def predict_sparse(self, I, z, alpha, s_depths, calib, network):
         t1 = time.perf_counter()*1000
 
         self.timer.start()
 
         I_batch = tf.stack(I)
         calib_batch = tf.stack(calib)
-        alpha_batch = tf.stack(alpha)
-        s_depth = tf.stack(s_depth)
+
+        max_len = 30000
+
+        mask_depths = [tf.range(0, max_len) < s_depth.shape[1]
+                       for s_depth in s_depths]
+
+        #s_depth = tf.stack(s_depth)
+        s_depths = [tf.pad(tf.constant(s_depth, dtype=tf.float32), [[0, 0], [0, max_len-s_depth.shape[1]]])
+                    for s_depth in s_depths]
 
         self.timer.log("stack")
 
@@ -87,40 +94,61 @@ class PhotometricOptimizer2:
 
         for i in range(self.max_iterations):
 
-            z_batch = tf.stack(z)
-
             self.timer.log("gradient")
 
-            loss_val = tf.constant(0.0, dtype=tf.float32)
-
             with tf.GradientTape(watch_accessed_variables=False) as tape:
-                tape.watch([z_batch, alpha_batch])
+                tape.watch([z, alpha])
+
+                loss_val = tf.constant(0.0, dtype=tf.float32)
+
+                z_batch = tf.stack(z)
+
+                alpha_batch = tf.stack(alpha)
 
                 P = network.decode(q, z_batch)
 
                 D_batch = network.mapToDepth(
                     alpha_batch, P)
 
-                D_int = interpolate_bilinear(D_batch, s_depth, indexing='xy')
+                for j in range(len(s_depths)):
+
+                    xy = s_depths[j][0:2]
+
+                    D_int = interpolate_bilinear(
+                        D_batch[j:j+1], tf.expand_dims(tf.transpose(xy, perm=[1, 0]), axis=0), indexing='xy')
+
+                    d_test = tf.expand_dims(s_depths[j][2:3], axis=-1)
+
+                    #e = tf.square(D_int - d_test)
+                    e = self.g.Huber(
+                        D_int - d_test, 0.1)
+
+                    e = tf.boolean_mask(e, tf.expand_dims(mask_depths[j], 0))
+
+                    loss_val += tf.reduce_sum(e)
 
                 loss_val += self.g.log_normal_loss(z_batch, mu, logvar)
                 loss_val += tf.reduce_sum(tf.square(tf.reduce_mean(network.mapToDepth(
                     tf.ones_like(alpha_batch), P), axis=[1, 2, 3]) - 1.0))
 
-            gradients = tape.gradient(loss_val, [z_batch, alpha_batch])
+            gradients = tape.gradient(loss_val, trainable_variables)
 
             rel_e = tf.abs(prev_loss - loss_val)/loss_val
+
+            prev_loss = loss_val
+
+            s = tf.constant(1, dtype=tf.float32)
 
             s, count, stop = self.evaluate_rel_error(rel_e, s, count)
 
             self.timer.log("update")
 
-            g = [tf.unstack(gradient) for gradient in gradients]
+            #g = [tf.unstack(gradient) for gradient in gradients]
 
-            flat_list = [item for sublist in g for item in sublist]
+            #flat_list = [item for sublist in g for item in sublist]
 
             self.optimizer.apply_gradients(
-                zip(flat_list, trainable_variables))
+                zip(gradients, trainable_variables))
 
             self.timer.log("end")
 

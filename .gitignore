@@ -145,3 +145,5 @@ ckpt*
 /demo/data/heatmap
 /demo/database/sfm
 *.zip
+
+*.ply

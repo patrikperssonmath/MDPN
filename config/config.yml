@@ -6,7 +6,7 @@ rgbd_dataset:
   root_dir: "/database/shape_dataset/" # "/database/depth_subsample/" #
 sfm_dataset:
   root_dir: "/database/sfm/"
-  datasets: [Fort_Channing_gate] #[scannet/*]
+  datasets: [door] #[scannet/*]
 model:
   root_dir: "/data/"
   log_dir: "/data/logs/shape_estimator"

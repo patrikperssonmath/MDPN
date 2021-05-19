@@ -115,8 +115,13 @@ class sfm_image:
 
         shape = self.sparse_depth.shape
 
-        u = np.dot(self.P, np.concatenate(
+        u = np.dot(np.dot(self.K, self.P), np.concatenate(
             (self.sparse_depth, np.ones((1, shape[-1])))))
+
+        d = u[2:]
+        u = u[0:2]/d
+
+        u = np.concatenate((u, d))
 
         return u
 
