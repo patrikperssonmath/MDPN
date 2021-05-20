@@ -274,11 +274,11 @@ class Graphics3:
         xx = x[:, :, 0:1, :]
         yy = x[:, :, 1:2, :]
 
-        mask = tf.logical_and(mask, tf.greater(xx, -1.0))
-        mask = tf.logical_and(mask, tf.greater(yy, -1.0))
+        mask = tf.logical_and(mask, tf.math.greater_equal(xx, 0.0))
+        mask = tf.logical_and(mask, tf.math.greater_equal(yy, 0.0))
 
-        mask = tf.logical_and(mask, tf.less(xx, w))
-        mask = tf.logical_and(mask, tf.less(yy, h))
+        mask = tf.logical_and(mask, tf.math.less_equal(xx, w-1))
+        mask = tf.logical_and(mask, tf.math.less_equal(yy, h-1))
 
         return mask
 
