@@ -64,11 +64,11 @@ class PhotometricOptimizer2:
 
         self.timer.start()
 
-        iterations = 1
+        iterations_test = 1
         percentages = [0.8]
 
         if self.sparse_test:
-            iterations = 10
+            iterations_test = 10
 
             percentages = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 
@@ -87,7 +87,7 @@ class PhotometricOptimizer2:
 
             error_validation_array = []
 
-            for i in range(iterations):
+            for i in range(iterations_test):
 
                 max_len = 20000
 
@@ -134,7 +134,7 @@ class PhotometricOptimizer2:
                     *error_validation_array, error_validation.numpy()]
 
             print(error_validation)
-            
+
             avg_error = np.mean(error_validation_array)
 
             errors_p = [*errors_p, avg_error]
@@ -149,6 +149,13 @@ class PhotometricOptimizer2:
 
         print('\nItr: {0} of {1}. Time {2} ms, per itr: {3}: loss {4}\n'.format(
             str(iterations.numpy()), str(self.max_iterations), str(diff*1000), str(diff*1000/(iterations.numpy())), str(loss_val.numpy())))
+
+        f = open("./data_sparse/data.cvs", "w+")
+
+        np.savetxt(f, np.array(percentages), delimiter=',')
+        np.savetxt(f, np.array(errors_p), delimiter=',')
+
+        f.close()
 
         return loss_val
 
