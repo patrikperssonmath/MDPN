@@ -6,7 +6,7 @@ rgbd_dataset:
   root_dir: "/database/shape_dataset/" # "/database/depth_subsample/" #
 sfm_dataset:
   root_dir: "/database/sfm/"
-  datasets: [desktop] #[scannet/*]
+  datasets: [door] #[scannet/*]
 model:
   root_dir: "/data/"
   log_dir: "/data/logs/shape_estimator"
@@ -40,3 +40,4 @@ Timer:
   measure: False
 Sparse:
   sparse_prediction: True
+  test: True

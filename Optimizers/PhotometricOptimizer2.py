@@ -38,6 +38,7 @@ class PhotometricOptimizer2:
         self.termination_crit = config['PhotometricOptimizer']['termination_crit']
         self.image_height = config['dataset']['image_height']
         self.image_width = config['dataset']['image_width']
+        self.sparse_test = config['Sparse']['test']
         self.g = Graphics3()
         self.optimizer = Adamax(lr=1e-3)
         self.timer = Timer(config)
@@ -63,28 +64,80 @@ class PhotometricOptimizer2:
 
         self.timer.start()
 
+        iterations = 1
+        percentages = [0.8]
+
+        if self.sparse_test:
+            iterations = 10
+
+            percentages = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+
+            for i, e in enumerate(z):
+                z[i].assign(tf.zeros_like(e))
+
+        errors_p = []
+
         I_batch = tf.stack(I)
         calib_batch = tf.stack(calib)
 
         z_batch = tf.stack(z)
         alpha_batch = tf.stack(alpha)
 
-        max_len = 20000
+        for percentage in percentages:
 
-        mask_depths = [tf.range(0, max_len) < s_depth.shape[1]
-                       for s_depth in s_depths]
+            error_validation_array = []
 
-        mask_depths = tf.stack(mask_depths)
+            for i in range(iterations):
 
-        s_depths_extend = [tf.pad(tf.constant(s_depth, dtype=tf.float32), [[0, 0], [0, max_len-s_depth.shape[1]]])
-                           for s_depth in s_depths]
+                max_len = 20000
 
-        s_depths_extend = tf.stack(s_depths_extend)
+                validation = 0.2
 
-        t1 = time.perf_counter()
+                mask_examples = [tf.range(0, s_depth.shape[1]) < int(
+                    s_depth.shape[1] * percentage) for s_depth in s_depths]
 
-        z_res, alpha_res, loss_val, iterations = self.infer_sparse.infere(I_batch, calib_batch, z_batch, alpha_batch,
-                                                                          s_depths_extend, mask_depths, network)
+                mask_examples = [tf.pad(m, [[0, max_len-m.get_shape()[0]]])
+                                 for m in mask_examples]
+
+                mask_examples = tf.stack(mask_examples)
+
+                mask_examples_validation = [tf.range(0, s_depth.shape[1]) > int(
+                    s_depth.shape[1] * (1-validation)) for s_depth in s_depths]
+
+                mask_examples_validation = [tf.pad(m, [[0, max_len-m.get_shape()[0]]])
+                                            for m in mask_examples_validation]
+
+                mask_examples_validation = tf.stack(mask_examples_validation)
+
+                mask_depths = [tf.range(0, max_len) < s_depth.shape[1]
+                               for s_depth in s_depths]
+
+                mask_depths = tf.stack(mask_depths)
+
+                depth_permute = [tf.transpose(tf.random.shuffle(tf.transpose(tf.constant(s_depth, dtype=tf.float32), perm=[1, 0])), perm=[1, 0])
+                                 for s_depth in s_depths]
+
+                s_depths_extend = [tf.pad(s_depth, [[0, 0], [0, max_len-s_depth.shape[1]]])
+                                   for s_depth in depth_permute]
+
+                s_depths_extend = tf.stack(s_depths_extend)
+
+                t1 = time.perf_counter()
+
+                z_res, alpha_res, loss_val, iterations, error_validation = self.infer_sparse.infere(I_batch, calib_batch, z_batch, alpha_batch,
+                                                                                                    s_depths_extend, mask_depths, mask_examples,
+                                                                                                    mask_examples_validation, network)
+
+                error_validation = tf.sqrt(error_validation)
+
+                error_validation_array = [
+                    *error_validation_array, error_validation.numpy()]
+
+            print(error_validation)
+            
+            avg_error = np.mean(error_validation_array)
+
+            errors_p = [*errors_p, avg_error]
 
         for i, e in enumerate(tf.unstack(z_res)):
             z[i].assign(e)

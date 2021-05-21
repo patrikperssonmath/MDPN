@@ -18,7 +18,7 @@ class InfereSparse:
         self.termination_crit = config["PhotometricOptimizer"]["termination_crit"]
 
     @tf.function
-    def infere(self, I, calibration, z_in, alpha_in, u, u_mask, network):
+    def infere(self, I, calibration, z_in, alpha_in, u, u_mask, mask_examples, mask_examples_validation, network):
 
         R = self.g.normalized_points(I, calibration)
 
@@ -41,6 +41,8 @@ class InfereSparse:
 
         q, _, _ = network.encode(IR)
 
+        mask_inference = tf.math.logical_and(u_mask, mask_examples)
+
         for i in tf.range(self.iterations):
 
             with tf.GradientTape(watch_accessed_variables=False) as tape:
@@ -59,14 +61,14 @@ class InfereSparse:
 
                 e = self.g.Huber(D_int - d_sparse, 0.1)
 
-                e = tf.boolean_mask(e, u_mask)
+                e = tf.boolean_mask(e, mask_inference)
 
                 error = tf.reduce_sum(e)
 
                 error += tf.reduce_sum(tf.square(tf.reduce_mean(network.mapToDepth(
                     tf.ones_like(self.alpha), P), axis=[1, 2, 3]) - 1.0))
 
-                error += tf.reduce_sum(tf.square(self.z))
+                error += tf.reduce_mean(tf.square(self.z))
 
                 # tf.print(i, error)
 
@@ -80,4 +82,11 @@ class InfereSparse:
 
             error_prev = error
 
-        return self.z, self.alpha, error, i+1
+        e = tf.square(D_int - d_sparse)
+
+        e = tf.boolean_mask(e, tf.math.logical_and(
+            u_mask, mask_examples_validation))
+
+        error_validation = tf.reduce_sum(e)
+
+        return self.z, self.alpha, error, i+1, error_validation
