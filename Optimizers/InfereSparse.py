@@ -84,9 +84,12 @@ class InfereSparse:
 
         e = tf.square(D_int - d_sparse)
 
-        e = tf.boolean_mask(e, tf.math.logical_and(
-            u_mask, mask_examples_validation))
+        error_validation = []
 
-        error_validation = tf.reduce_sum(e)
+        for j, err in enumerate(tf.unstack(e)):
+            e_m = tf.boolean_mask(err, tf.math.logical_and(
+                u_mask[j], mask_examples_validation[j]))
 
-        return self.z, self.alpha, error, i+1, error_validation
+            error_validation = [*error_validation, tf.sqrt(tf.reduce_mean(e_m))]
+
+        return self.z, self.alpha, error, i+1, tf.stack(error_validation)

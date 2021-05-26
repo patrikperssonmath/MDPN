@@ -149,3 +149,5 @@ ckpt*
 *.ply
 
 new_images
+
+*.cvs

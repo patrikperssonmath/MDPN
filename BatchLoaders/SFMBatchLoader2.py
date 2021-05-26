@@ -61,6 +61,7 @@ class SFMBatchLoader2:
 
     def terminate(self):
         self.loader_thread.terminate()
+        self.optimizer.store_results()
 
     def setup(self, z_variables, alpha_variables):
 

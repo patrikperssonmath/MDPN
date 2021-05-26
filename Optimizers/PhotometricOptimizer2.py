@@ -51,6 +51,47 @@ class PhotometricOptimizer2:
         self.infer_sparse = InfereSparse(config)
         self.infer_photo = InferePhotometric(config)
 
+        self.results_sparse = {}
+
+    def store_results(self):
+
+        if not self.store_results:
+            return
+
+        accumulated = {}
+        count = {}
+
+        for key, v in self.results_sparse.items():
+
+            for val in v:
+
+                if val[0] not in accumulated:
+                    accumulated[val[0]] = val[1]
+                    count[val[0]] = 1
+
+                else:
+                    accumulated[val[0]] += val[1]
+                    count[val[0]] += 1
+
+        k = list(accumulated.keys())
+
+        k.sort()
+
+        result = []
+
+        for key in k:
+            result = [*result, accumulated[key]/count[key]]
+
+        f = open("./data_sparse/data.cvs", "w+")
+
+        p = np.expand_dims(np.array(k), axis=0)
+        err = np.expand_dims(np.array(result), axis=0)
+
+        np.savetxt(f, p, delimiter=',')
+        np.savetxt(f, err, delimiter=',')
+
+        f.close()
+
     def updateLearningRate(self, lr):
         self.optimizer.learning_rate.assign(lr)
 
@@ -60,7 +101,7 @@ class PhotometricOptimizer2:
     def getCheckPointVariables(self):
         return {"photometric_optimizer": self.optimizer}
 
-    def predict_sparse(self, I, z, alpha, s_depths, calib, network):
+    def predict_sparse(self, I, z, alpha, s_depths, calib, network, names):
 
         self.timer.start()
 
@@ -68,9 +109,9 @@ class PhotometricOptimizer2:
         percentages = [0.8]
 
         if self.sparse_test:
-            iterations_test = 10
+            iterations_test = 20
 
-            percentages = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+            percentages = [0.01, 0.02, 0.05, 0.1, 0.3, 0.4, 0.5, 0.6, 0.7]
 
             for i, e in enumerate(z):
                 z[i].assign(tf.zeros_like(e))
@@ -128,14 +169,12 @@ class PhotometricOptimizer2:
                                                                                                     s_depths_extend, mask_depths, mask_examples,
                                                                                                     mask_examples_validation, network)
 
-                error_validation = tf.sqrt(error_validation)
-
                 error_validation_array = [
                     *error_validation_array, error_validation.numpy()]
 
-            print(error_validation)
+            avg_error = np.mean(error_validation_array, axis=0)
 
-            avg_error = np.mean(error_validation_array)
+            print(avg_error)
 
             errors_p = [*errors_p, avg_error]
 
@@ -150,12 +189,21 @@ class PhotometricOptimizer2:
         print('\nItr: {0} of {1}. Time {2} ms, per itr: {3}: loss {4}\n'.format(
             str(iterations.numpy()), str(self.max_iterations), str(diff*1000), str(diff*1000/(iterations.numpy())), str(loss_val.numpy())))
 
+        """
         f = open("./data_sparse/data.cvs", "w+")
 
-        np.savetxt(f, np.array(percentages), delimiter=',')
-        np.savetxt(f, np.array(errors_p), delimiter=',')
+        p = np.expand_dims(np.array(percentages), axis=0)
+        err = np.expand_dims(np.array(errors_p), axis=0)
+
+        np.savetxt(f, p, delimiter=',')
+        np.savetxt(f, err, delimiter=',')
 
         f.close()
+        """
+
+        for i, name in enumerate(names):
+            self.results_sparse[name] = [
+                (percentages[j], e[i]) for j, e in enumerate(errors_p)]
 
         return loss_val
 
