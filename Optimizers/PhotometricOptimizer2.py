@@ -30,6 +30,7 @@ from PIL import Image
 from tensorflow_addons.image import interpolate_bilinear
 from .InfereSparse import InfereSparse
 from .InferePhotometric import InferePhotometric
+import os
 
 
 class PhotometricOptimizer2:
@@ -52,6 +53,8 @@ class PhotometricOptimizer2:
         self.infer_photo = InferePhotometric(config)
 
         self.results_sparse = {}
+
+        self.current = 0
 
     def store_results(self):
 
@@ -207,7 +210,7 @@ class PhotometricOptimizer2:
 
         return loss_val
 
-    def predict(self, I, z, alpha, T, Tinv, calib, network):
+    def predict(self, I, z, alpha, T, Tinv, calib, network, names):
 
         I_batch = tf.stack(I)
         T_batch = tf.stack(T)
@@ -218,9 +221,9 @@ class PhotometricOptimizer2:
 
         t1 = time.perf_counter()
 
-        z_res, alpha_res, loss_val, iterations = self.infer_photo.infere(I_batch, T_batch, Tinv_batch,
-                                                                         calib_batch, z_batch, alpha_batch,
-                                                                         network)
+        z_res, alpha_res, loss_val, iterations, I_occlusion, m_g, relative_depth_error = self.infer_photo.infere(I_batch, T_batch, Tinv_batch,
+                                                                                                                 calib_batch, z_batch, alpha_batch,
+                                                                                                                 network)
 
         for i, e in enumerate(tf.unstack(z_res)):
             z[i].assign(e)
@@ -232,6 +235,20 @@ class PhotometricOptimizer2:
 
         print('\nItr: {0} of {1}. Time {2} ms, per itr: {3}: loss {4}\n'.format(
             str(iterations.numpy()), str(self.max_iterations), str(diff*1000), str(diff*1000/(iterations.numpy())), str(loss_val.numpy())))
+
+        I_occlusion = I_occlusion.numpy()
+        relative_depth_error = relative_depth_error.numpy()
+
+        shape = I_occlusion.shape
+
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+
+                im = Image.fromarray((I_occlusion[i, j]*255).astype(np.uint8))
+                im.save(os.path.join("./occlusion_results", str(self.current)+"_" +
+                        str(i)+"_"+str(j)+".png"))
+
+        self.current += 1
 
         return loss_val
 

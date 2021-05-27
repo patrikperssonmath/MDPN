@@ -148,6 +148,7 @@ ckpt*
 
 *.ply
 
-new_images
+raw_data
 
 *.cvs
+*.png

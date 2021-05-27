@@ -57,9 +57,14 @@ class PhotometricSample:
 
     def predict(self, network):
 
+        names = []
+
+        for image in self.sfm_images:
+            names = [*names, image.getId()]
+
         # optimizes over z and alpha
         recon_loss = self.photometric_optimizer.predict(
-            self.I, self.z, self.alpha, self.T, self.Tinv, self.calib, network)
+            self.I, self.z, self.alpha, self.T, self.Tinv, self.calib, network, names)
 
         return recon_loss
 

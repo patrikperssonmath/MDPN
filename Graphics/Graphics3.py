@@ -389,6 +389,9 @@ class Graphics3:
 
     @ tf.function(experimental_compile=True)
     def calculate_occlusion_mask(self, relative_error, mask):
+        
+        # test using only threshold
+        #return relative_error >= -1e-2
 
         relative_error = tf.where(
             mask, relative_error, np.inf * tf.ones_like(relative_error))
@@ -407,7 +410,7 @@ class Graphics3:
         median_variance = tf.reshape(
             median_variance, shape=[shape[0], shape[1], 1, 1, 1])
 
-        mask_g = tf.greater(e_rel, -4.44 * tf.sqrt(median_variance))
+        mask_g = tf.greater(e_rel, -4.44*tf.sqrt(median_variance))
 
         return mask_g
 
@@ -598,6 +601,35 @@ class Graphics3:
 
         return relative_depth_error, error_image, mask
 
+    def get_occlusion(self, I_batch, D_batch, T_batch, Tinv_batch, calib_batch, angle, alpha_batch):
+
+        I_warp, D_warp, d_projected_warp, mask = self.warp(I_batch,
+                                                           D_batch,
+                                                           T_batch,
+                                                           Tinv_batch)
+
+        relative_depth_error = self.calculate_relative_depth_error(
+            D_warp, d_projected_warp, alpha_batch)
+
+        error_image = tf.expand_dims(I_batch, axis=0) - tf.zeros_like(I_warp)
+
+        mask_g = self.calculate_occlusion_mask(relative_depth_error, mask)
+
+        shape_d = tf.shape(D_batch)
+
+        mask_I = self.calculate_Identity_mask(
+            shape_d[2], shape_d[1], shape_d[0])
+
+        mask = tf.logical_or(tf.logical_not(mask_I), mask_g)
+
+        red = tf.reshape(tf.constant(
+            [1, 0, 0], dtype=tf.float32), shape=[1, 1, 1, 1, 3])
+
+        error_image = tf.where(
+            mask, error_image, error_image * 0.5 + 0.5 * red)
+
+        return error_image, mask, relative_depth_error
+
     @ tf.function(experimental_compile=True)
     def evaluate_photogeometric_error(self, I_batch, D_batch, T_batch, Tinv_batch, calib_batch, angle, alpha_batch):
 
@@ -625,13 +657,9 @@ class Graphics3:
             relative_depth_error, 0.1))/mask_count
         """
 
-        error_photometric = tf.reduce_sum(
-            self.Huber(error_image, 0.1))/0.01
+        error_photometric = tf.reduce_sum(self.Huber(error_image, 0.1))
 
-        error_depth = tf.reduce_sum(self.Huber(
-            relative_depth_error, 0.1))/0.1
-
-        #error_depth = tf.constant(0.0, dtype=tf.float32)
+        error_depth = tf.reduce_sum(self.Huber(relative_depth_error, 0.1))
 
         return error_photometric, error_depth
 

@@ -85,7 +85,16 @@ class InferePhotometric:
 
             error_prev = error
 
-        return self.z, self.alpha, error, i+1
+        I_occlusion, m_g, relative_depth_error = self.g.get_occlusion(
+            I,
+            D,
+            T,
+            Tinv,
+            calibration,
+            self.angle_th,
+            self.alpha)
+
+        return self.z, self.alpha, error, i+1, I_occlusion, m_g, relative_depth_error
 
     """ not used!!
 
