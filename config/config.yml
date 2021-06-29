@@ -6,7 +6,7 @@ rgbd_dataset:
   root_dir: "/database/shape_dataset/" # "/database/depth_subsample/" #
 sfm_dataset:
   root_dir: "/database/sfm/"
-  datasets: [bjorn_dog1_4.2813569989399649795_kf_and_poses] #[scannet/*]
+  datasets: [door] #[scannet/*]
 model:
   root_dir: "/data/"
   log_dir: "/data/logs/shape_estimator"
