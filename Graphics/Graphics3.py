@@ -389,9 +389,9 @@ class Graphics3:
 
     @ tf.function(experimental_compile=True)
     def calculate_occlusion_mask(self, relative_error, mask):
-        
+
         # test using only threshold
-        #return relative_error >= -1e-2
+        #return relative_error >= 0 #-1e-2
 
         relative_error = tf.where(
             mask, relative_error, np.inf * tf.ones_like(relative_error))
@@ -620,7 +620,9 @@ class Graphics3:
         mask_I = self.calculate_Identity_mask(
             shape_d[2], shape_d[1], shape_d[0])
 
-        mask = tf.logical_or(tf.logical_not(mask_I), mask_g)
+        mask = mask_g  # tf.logical_and(mask, mask_g)
+
+        mask = tf.logical_or(tf.logical_not(mask_I), mask)
 
         red = tf.reshape(tf.constant(
             [1, 0, 0], dtype=tf.float32), shape=[1, 1, 1, 1, 3])

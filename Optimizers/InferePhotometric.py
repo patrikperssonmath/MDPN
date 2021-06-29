@@ -21,6 +21,7 @@ class InferePhotometric:
         self.optimizer = Adamax(lr=1e-3)
         self.iterations = 100  # config["InferePhotometric"]["iterations"]
         self.termination_crit = config["PhotometricOptimizer"]["termination_crit"]
+        self.output_occlusion_mask = config['PhotometricOptimizer']['output_occlusion_mask']
 
     @tf.function
     def infere(self, I, T, Tinv, calibration, z_in, alpha_in, network):
@@ -85,14 +86,20 @@ class InferePhotometric:
 
             error_prev = error
 
-        I_occlusion, m_g, relative_depth_error = self.g.get_occlusion(
-            I,
-            D,
-            T,
-            Tinv,
-            calibration,
-            self.angle_th,
-            self.alpha)
+        if self.output_occlusion_mask:
+
+            I_occlusion, m_g, relative_depth_error = self.g.get_occlusion(
+                I,
+                D,
+                T,
+                Tinv,
+                calibration,
+                self.angle_th,
+                self.alpha)
+        else:
+            I_occlusion = 0
+            m_g = 0
+            relative_depth_error = 0
 
         return self.z, self.alpha, error, i+1, I_occlusion, m_g, relative_depth_error
 

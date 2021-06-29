@@ -40,6 +40,7 @@ class PhotometricOptimizer2:
         self.image_height = config['dataset']['image_height']
         self.image_width = config['dataset']['image_width']
         self.sparse_test = config['Sparse']['test']
+        self.output_occlusion_mask = config['PhotometricOptimizer']['output_occlusion_mask']
         self.g = Graphics3()
         self.optimizer = Adamax(lr=1e-3)
         self.timer = Timer(config)
@@ -236,17 +237,19 @@ class PhotometricOptimizer2:
         print('\nItr: {0} of {1}. Time {2} ms, per itr: {3}: loss {4}\n'.format(
             str(iterations.numpy()), str(self.max_iterations), str(diff*1000), str(diff*1000/(iterations.numpy())), str(loss_val.numpy())))
 
-        I_occlusion = I_occlusion.numpy()
-        relative_depth_error = relative_depth_error.numpy()
+        if self.output_occlusion_mask:
+            I_occlusion = I_occlusion.numpy()
+            relative_depth_error = relative_depth_error.numpy()
 
-        shape = I_occlusion.shape
+            shape = I_occlusion.shape
 
-        for i in range(shape[0]):
-            for j in range(shape[1]):
+            for i in range(shape[0]):
+                for j in range(shape[1]):
 
-                im = Image.fromarray((I_occlusion[i, j]*255).astype(np.uint8))
-                im.save(os.path.join("./occlusion_results", str(self.current)+"_" +
-                        str(i)+"_"+str(j)+".png"))
+                    im = Image.fromarray(
+                        (I_occlusion[i, j]*255).astype(np.uint8))
+                    im.save(os.path.join("./occlusion_results", str(self.current)+"_" +
+                            str(i)+"_"+str(j)+".png"))
 
         self.current += 1
 

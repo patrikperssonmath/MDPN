@@ -6,7 +6,7 @@ rgbd_dataset:
   root_dir: "/database/shape_dataset/" # "/database/depth_subsample/" #
 sfm_dataset:
   root_dir: "/database/sfm/"
-  datasets: [door] #[scannet/*]
+  datasets: [bjorn_dog1_4.2813569989399649795_kf_and_poses] #[scannet/*]
 model:
   root_dir: "/data/"
   log_dir: "/data/logs/shape_estimator"
@@ -19,6 +19,7 @@ PhotometricOptimizer:
   termination_crit: 0.001
   angle_th: 85
   angle_th_display: 80
+  output_occlusion_mask: False
 SFM:
   nbr_covisible_cameras: 5
   min_covisibility: 0  
@@ -26,7 +27,7 @@ SFM:
 Trainer:
   ckpt_freq: 5
   write_dataset_freq: 10
-  max_dataset_write: 20
+  max_dataset_write: 50
   predict_only: True
   write_tb_freq: 1
   nbr_samples_per_update: 5
@@ -39,5 +40,5 @@ Manager:
 Timer:
   measure: False
 Sparse:
-  sparse_prediction: True
-  test: True
+  sparse_prediction: False
+  test: False
