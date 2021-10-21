@@ -268,11 +268,7 @@ class PhotometricSample:
 
         if depth_gt is not None:
 
-            ar = depth_gt
-
-            factor = 20000.0/np.amax(ar)
-
-            ar = ar * factor
+            ar = depth_gt * 1000
 
             ar = ar.astype(np.uint32)
 

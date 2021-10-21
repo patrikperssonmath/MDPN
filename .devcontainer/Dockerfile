@@ -74,9 +74,9 @@ RUN pip install -U matplotlib
 #RUN apt-get update -y \
 #    && pip3 install opencv-python-headless
 
-VOLUME data
-VOLUME database
-VOLUME project
+VOLUME /data
+VOLUME /database
+VOLUME /project
 
 # Switch back to dialog for any ad-hoc use of apt-get
 ENV DEBIAN_FRONTEND=dialog
