@@ -28,6 +28,7 @@ import shutil
 import time
 from colour import Color
 import matplotlib as mpl
+import Sample.metrics as m
 
 
 class PhotometricSample:
@@ -251,20 +252,22 @@ class PhotometricSample:
 
         ar = depth_prediction.numpy()
 
-        factor = 20000.0/np.amax(ar)
+        #factor = 20000.0/np.amax(ar)
 
-        ar = ar * factor
+        ar = ar * 1000
 
         ar = ar.astype(np.uint32)
 
         im = Image.fromarray(ar)
 
         path = os.path.join(pred_path, sfm_image.getId() +
-                            "_"+str(factor)+"_.png")
+                            "_"+str(1000)+"_.png")
 
         im.save(path)
 
         depth_gt = sfm_image.getDepth()
+
+        e = 7*[0.0]
 
         if depth_gt is not None:
 
@@ -275,9 +278,26 @@ class PhotometricSample:
             im = Image.fromarray(ar)
 
             path = os.path.join(
-                gt_path, sfm_image.getId() + "_"+str(factor)+"_.png")
+                gt_path, sfm_image.getId() + "_"+str(1000)+"_.png")
 
             im.save(path)
+
+            ####
+
+            prediction = depth_prediction.numpy()
+
+            mask = depth_gt > 0
+
+            s = np.divide(depth_gt[mask], prediction[mask])
+
+            prediction = prediction * np.median(s)
+
+            e = m.get_metrics(prediction, depth_gt, mask)
+
+            np.savetxt(os.path.join(
+                gt_path, sfm_image.getId() + "_.txt"), e, delimiter=",")
+
+        return e
 
     def write_z_heatmap(self, path, network):
 

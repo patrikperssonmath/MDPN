@@ -193,7 +193,9 @@ class Manager:
         self.startTensorboard()
 
         if self.write_predictions_only:
-            #self.writeDataset(self.photometric_batch_loader, 0)
+            self.writeDataset(self.photometric_batch_loader, 0)
+
+            #self.write_results()
 
             if self.write_heatmap_flag:
                 self.write_heatmap()
@@ -317,19 +319,27 @@ class Manager:
         if os.path.exists(path):
             shutil.rmtree(path)
 
+        e_vec = []
+
         for i in range(N):
 
             sample, on_epoch = self.photometric_batch_loader.getNext(
                 self.z_variables, self.alpha_variables)
 
             if sample is not None:
-                sample.write_depth(path, self.network)
+                e = sample.write_depth(path, self.network)
+
+                e_vec.append(e)
 
             print('\n sample: {0} of {1}'.format(
                 str(i), str(N)))
 
             if self.terminate_hard:
                 break
+
+        e = tf.reduce_mean(e_vec, axis=0)
+
+        np.savetxt(os.path.join(path, "results_.txt"), e, delimiter=",")
 
     def write_heatmap(self):
 

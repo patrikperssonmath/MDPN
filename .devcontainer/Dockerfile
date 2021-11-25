@@ -59,6 +59,8 @@ RUN apt-get update -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
+RUN python3 -m pip install --upgrade pip
+
 RUN apt-get update -y \
  && pip3 install scikit-image \
  && pip3 install autopep8 \
